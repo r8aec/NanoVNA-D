@@ -869,11 +869,12 @@ config_t config = {
 properties_t current_props;
 
 // NanoVNA Default settings
-static const trace_t def_trace[TRACES_MAX] = {//enable, type, channel, smith format, scale, refpos
-  { TRUE, TRC_LOGMAG, 0,   MS_RX, 10.0, NGRIDY-1 },
-  { TRUE, TRC_LOGMAG, 1, MS_REIM, 10.0, NGRIDY-1 },
-  { TRUE, TRC_SMITH,  0,   MS_RX, 1.0,         0 },
-  { TRUE, TRC_PHASE,  1, MS_REIM, 90.0, NGRIDY/2 }
+static const trace_t def_trace[TRACES_MAX] = {
+  //enable, type, channel, smith format, scale, refpos
+  { TRUE, TRC_SWR,    0,   MS_RX,          0.25, 0 },
+  { TRUE, TRC_LOGMAG, 1, MS_REIM,         10.0, NGRIDY-1 },
+  { TRUE, TRC_SMITH,  0,   MS_RX,          1.0,         0 },
+  { TRUE, TRC_PHASE,  1, MS_REIM,         90.0, NGRIDY/2 }
 };
 
 static const marker_t def_markers[MARKERS_MAX] = {
@@ -905,8 +906,8 @@ static const marker_t def_markers[MARKERS_MAX] = {
 static void load_default_properties(void) {
 //Magic add on caldata_save
   current_props.magic             = PROPERTIES_MAGIC;
-  current_props._frequency0       =     50000;    // start =  50kHz
-  current_props._frequency1       = 900000000;    // end   = 900MHz
+  current_props._frequency0       = 200000000;    // start = 200MHz
+  current_props._frequency1       = 250000000;    // end   = 250MHz
   current_props._var_freq         = 0;
   current_props._sweep_points     = POINTS_COUNT_DEFAULT; // Set default points count
   current_props._cal_frequency0   =     50000;    // calibration start =  50kHz
