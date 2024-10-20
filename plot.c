@@ -659,23 +659,22 @@ static void mark_set_index(index_t *index, uint16_t i, uint16_t x, uint16_t y) {
 }
 
 static void 
-draw_indicator_rectangle(int idx) {
-  switch (idx)
+draw_swr_indicator(int idx) {
+/*  switch (idx)
   {
   case 0:
     lcd_set_foreground(LCD_NORMAL_BAT_COLOR);
     break;
- 
   case 1:
     lcd_set_foreground(LCD_LOW_BAT_COLOR);
     break;
   case 2:
-    lcd_set_foreground(LCD_TRACE_1_COLOR);
+    lcd_set_foreground(LCD_TRACE_4_COLOR);
     break;
   default:
     lcd_set_foreground(LCD_BG_COLOR);
     break;
-  }
+  }*/
   lcd_set_foreground(LCD_MEASURE_COLOR);
     lcd_line(0,30,9,30);
     lcd_line(9,30,9,55);
@@ -717,16 +716,15 @@ trace_into_index(int t) {
       mark_set_index(index, i, (uint16_t)(x>>16), y);
       if (type & (1<<TRC_SWR)) {
         int grid_color_idx_new = LCD_GRID_COLOR; 
-        if (max_v > SWR_MAX_VALUE)  
+        if (max_v > SWR_MAX_VALUE || max_v < 1 )  
           grid_color_idx_new = LCD_LOW_BAT_COLOR;
         else if (max_v > SWR_MID_VALUE)    
-          grid_color_idx_new = LCD_TRACE_1_COLOR;
+          grid_color_idx_new = LCD_TRACE_4_COLOR;
         else
           grid_color_idx_new = LCD_NORMAL_BAT_COLOR;
         if (grid_color_idx_new != grid_color_idx) {
           grid_color_idx = grid_color_idx_new;
           request_to_redraw(REDRAW_AREA | REDRAW_PLOT | REDRAW_BATTERY | REDRAW_CAL_STATUS | REDRAW_FREQUENCY);
-          draw_indicator_rectangle(grid_color_idx_new);
         }  
       }     
     }
@@ -1596,8 +1594,10 @@ draw_all(void)
     draw_frequencies();
   if (redraw_request & REDRAW_CAL_STATUS)
     draw_cal_status();
-  if (redraw_request & REDRAW_BATTERY)
+  if (redraw_request & REDRAW_BATTERY) {
     draw_battery_status();
+    draw_swr_indicator(grid_color_idx);
+  }
   redraw_request = 0;
 }
 

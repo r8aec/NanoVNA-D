@@ -928,7 +928,7 @@ static void load_default_properties(void) {
   current_props._current_trace   = 0;
   current_props._active_marker   = 0;
   current_props._previous_marker = MARKER_INVALID;
-  current_props._mode            = 0;
+  current_props._mode            = TD_MARKER_TRACK;
   current_props._reserved        = 0;
   current_props._power           = SI5351_CLK_DRIVE_STRENGTH_AUTO;
   current_props._cal_power       = SI5351_CLK_DRIVE_STRENGTH_AUTO;
@@ -937,6 +937,7 @@ static void load_default_properties(void) {
 //current_props._cal_data[5][POINTS_COUNT][2];
 //Checksum add on caldata_save
 //current_props.checksum = 0;
+  config._vna_mode = 1 << VNA_MODE_SHOW_GRID;
 }
 
 //
