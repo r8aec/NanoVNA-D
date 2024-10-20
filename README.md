@@ -8,6 +8,8 @@ NanoVNA - Very tiny handheld Vector Network Analyzer
 
 # About
 
+This is not universal firmware. It is only "Ok/not Ok" SWR checker.
+
 **NanoVNA-H** and **NanoVNA-H4** are very tiny handheld Vector Network Analyzers (VNA).
 They are standalone portable devices withLCD and battery.
 This project aims to provide improved firmware for this useful instrument for enthusiast.
