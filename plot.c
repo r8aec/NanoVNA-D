@@ -64,6 +64,12 @@ typedef struct {
 } index_t;
 static index_t trace_index[TRACE_INDEX_COUNT][SWEEP_POINTS_MAX];
 
+// Variable used to change grid color
+static int grid_color_idx = LCD_GRID_COLOR;
+
+#define SWR_MAX_VALUE 3
+#define SWR_MID_VALUE 2
+
 #if 1
 // All used in plot v > 0
 #define float2int(v) ((int)((v)+0.5f))
@@ -652,6 +658,34 @@ static void mark_set_index(index_t *index, uint16_t i, uint16_t x, uint16_t y) {
   index[i].y = y;
 }
 
+static void 
+draw_indicator_rectangle(int idx) {
+  switch (idx)
+  {
+  case 0:
+    lcd_set_foreground(LCD_NORMAL_BAT_COLOR);
+    break;
+ 
+  case 1:
+    lcd_set_foreground(LCD_LOW_BAT_COLOR);
+    break;
+  case 2:
+    lcd_set_foreground(LCD_TRACE_1_COLOR);
+    break;
+  default:
+    lcd_set_foreground(LCD_BG_COLOR);
+    break;
+  }
+  lcd_set_foreground(LCD_MEASURE_COLOR);
+    lcd_line(0,30,9,30);
+    lcd_line(9,30,9,55);
+    lcd_line(9,55,0,55);
+    lcd_line(0,55,0,30);
+  lcd_set_foreground(idx);
+  for (int x=1; x<9; x++)
+    lcd_line(x, 31, x, 54);
+}  
+
 // Calculate and cache point coordinates for trace
 static void
 trace_into_index(int t) {
@@ -668,17 +702,33 @@ trace_into_index(int t) {
       refpos+= dscale;
     uint32_t dx = ((WIDTH)<<16) / (sweep_points-1), x = (CELLOFFSETX<<16) + dx * start + 0x8000;
     int32_t y;
+    float max_v = 0;
     for (i = start; i <= stop; i++, x+= dx) {
       float v = 0;
       if (c) v = c(i, &array[2*i]);         // Get value
       if (v == INFINITY) {
         y = 0;
       } else {
+        if (v > max_v) max_v = v;
         y = refpos - v * dscale;
              if (y <      0) y = 0;
         else if (y > HEIGHT) y = HEIGHT;
       }
       mark_set_index(index, i, (uint16_t)(x>>16), y);
+      if (type & (1<<TRC_SWR)) {
+        int grid_color_idx_new = LCD_GRID_COLOR; 
+        if (max_v > SWR_MAX_VALUE)  
+          grid_color_idx_new = LCD_LOW_BAT_COLOR;
+        else if (max_v > SWR_MID_VALUE)    
+          grid_color_idx_new = LCD_TRACE_1_COLOR;
+        else
+          grid_color_idx_new = LCD_NORMAL_BAT_COLOR;
+        if (grid_color_idx_new != grid_color_idx) {
+          grid_color_idx = grid_color_idx_new;
+          request_to_redraw(REDRAW_AREA | REDRAW_PLOT | REDRAW_BATTERY | REDRAW_CAL_STATUS | REDRAW_FREQUENCY);
+          draw_indicator_rectangle(grid_color_idx_new);
+        }  
+      }     
     }
     return;
   }
@@ -1336,7 +1386,8 @@ draw_cell(int x0, int y0) {
 
 // Draw grid
 #if 1
-  c = GET_PALTETTE_COLOR(LCD_GRID_COLOR);
+ // c = GET_PALTETTE_COLOR(LCD_GRID_COLOR);
+  c = GET_PALTETTE_COLOR(grid_color_idx);
   // Generate grid type list
   uint32_t trace_type = 0;
   bool use_smith = false;
