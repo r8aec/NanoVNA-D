@@ -871,10 +871,10 @@ properties_t current_props;
 // NanoVNA Default settings
 static const trace_t def_trace[TRACES_MAX] = {
   //enable, type, channel, smith format, scale, refpos
-  { TRUE, TRC_SWR,    0,   MS_RX,          0.25, 0 },
-  { TRUE, TRC_LOGMAG, 1, MS_REIM,         10.0, NGRIDY-1 },
-  { TRUE, TRC_SMITH,  0,   MS_RX,          1.0,         0 },
-  { TRUE, TRC_PHASE,  1, MS_REIM,         90.0, NGRIDY/2 }
+  { TRUE,  TRC_SWR,    0,   MS_RX,          0.25, 0 },
+  { FALSE, TRC_LOGMAG, 1, MS_REIM,         10.0, NGRIDY-1 },
+  { FALSE, TRC_SMITH,  0,   MS_RX,          1.0,         0 },
+  { FALSE, TRC_PHASE,  1, MS_REIM,         90.0, NGRIDY/2 }
 };
 
 static const marker_t def_markers[MARKERS_MAX] = {
