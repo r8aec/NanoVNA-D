@@ -66,6 +66,8 @@ static index_t trace_index[TRACE_INDEX_COUNT][SWEEP_POINTS_MAX];
 
 // Variable used to change grid color
 static int grid_color_idx = LCD_GRID_COLOR;
+// Variable used to indicate "Device not calibrated" status
+static int device_calibrated = 0;
 
 #define SWR_MAX_VALUE 3
 #define SWR_MID_VALUE 2
@@ -702,6 +704,7 @@ trace_into_index(int t) {
     uint32_t dx = ((WIDTH)<<16) / (sweep_points-1), x = (CELLOFFSETX<<16) + dx * start + 0x8000;
     int32_t y;
     float max_v = 0;
+    
     for (i = start; i <= stop; i++, x+= dx) {
       float v = 0;
       if (c) v = c(i, &array[2*i]);         // Get value
@@ -725,7 +728,12 @@ trace_into_index(int t) {
         if (grid_color_idx_new != grid_color_idx) {
           grid_color_idx = grid_color_idx_new;
           request_to_redraw(REDRAW_AREA | REDRAW_PLOT | REDRAW_BATTERY | REDRAW_CAL_STATUS | REDRAW_FREQUENCY);
-        }  
+        }
+        int cal_minimum_ok = (((cal_status & CALSTAT_OPEN) && (cal_status & CALSTAT_SHORT) && (cal_status & CALSTAT_ED)) || (cal_status & CALSTAT_APPLY));
+        if (device_calibrated != cal_minimum_ok) {
+            device_calibrated = cal_minimum_ok;
+            request_to_redraw(REDRAW_AREA | REDRAW_PLOT | REDRAW_BATTERY | REDRAW_CAL_STATUS | REDRAW_FREQUENCY | REDRAW_CELLS);
+        }
       }     
     }
     return;
@@ -1410,7 +1418,16 @@ draw_cell(int x0, int y0) {
             cell_buffer[y * CELLWIDTH + x] = c;
       }
     }
+  }       
+
+//  int cal_minimum_ok = ((cal_status & CALSTAT_OPEN) && (cal_status & CALSTAT_SHORT) && (cal_status & CALSTAT_ED)) || (cal_status & CALSTAT_APPLY);
+  if (! device_calibrated) {
+    lcd_set_foreground(LCD_DISABLE_CAL_COLOR);
+    lcd_line (18,0,LCD_WIDTH-5,LCD_HEIGHT-9);
+    lcd_line (18,LCD_HEIGHT-9,LCD_WIDTH-5,0);
   }
+    
+
   // Smith greed line (1000 system ticks for all screen calls)
   if (trace_type & (1 << TRC_SMITH)) {
     if (use_smith)
@@ -1797,7 +1814,7 @@ draw_cal_status(void)
   int y = CALIBRATION_INFO_POSY;
   lcd_set_colors(LCD_DISABLE_CAL_COLOR, LCD_BG_COLOR);
   lcd_fill(x, y, OFFSETX - x, 10*(sFONT_STR_HEIGHT));
-  lcd_set_font(FONT_SMALL);
+  lcd_set_font(FONT_SMALL); 
   if (cal_status & CALSTAT_APPLY) {
     // Set 'C' string for slot status
     char c[4] = {'C', '0' + lastsaveid, 0, 0};

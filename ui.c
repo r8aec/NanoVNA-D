@@ -2521,8 +2521,8 @@ const menuitem_t menu_top[] = {
   { MT_SUBMENU, 0, "SD CARD",   menu_sdcard },
 #endif
   { MT_SUBMENU, 0, "CONFIG",    menu_config },
-//  { MT_CALLBACK, 0, "RESET AND\nENTER DFU", menu_dfu_cb },
-//  { MT_SUBMENU, 0,                       "CLEAR CONFIG",                   menu_clear },
+  { MT_CALLBACK, 0, "RESET AND\nENTER DFU", menu_dfu_cb },
+  { MT_SUBMENU, 0,                       "CLEAR CONFIG",                   menu_clear },
   { MT_ADV_CALLBACK, 0, "%s\nSWEEP", menu_pause_acb },
   { MT_NEXT, 0, NULL, NULL } // sentinel
 };

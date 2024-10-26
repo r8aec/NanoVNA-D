@@ -853,7 +853,7 @@ config_t config = {
   ._harmonic_freq_threshold = FREQUENCY_THRESHOLD,
   ._IF_freq    = FREQUENCY_OFFSET,
   ._touch_cal  = DEFAULT_TOUCH_CONFIG,
-  ._vna_mode   = 0, // USB mode, search max
+  ._vna_mode   = 0, // USB mode, search axn
   ._brightness = DEFAULT_BRIGHTNESS,
   ._dac_value   = 1922,
   ._vbat_offset = 420,
@@ -907,7 +907,7 @@ static void load_default_properties(void) {
 //Magic add on caldata_save
   current_props.magic             = PROPERTIES_MAGIC;
   current_props._frequency0       = 200000000;    // start = 200MHz
-  current_props._frequency1       = 250000000;    // end   = 250MHz
+  current_props._frequency1       = 900000000;    // end   = 900MHz
   current_props._var_freq         = 0;
   current_props._sweep_points     = POINTS_COUNT_DEFAULT; // Set default points count
   current_props._cal_frequency0   =     50000;    // calibration start =  50kHz
@@ -937,7 +937,7 @@ static void load_default_properties(void) {
 //current_props._cal_data[5][POINTS_COUNT][2];
 //Checksum add on caldata_save
 //current_props.checksum = 0;
-  config._vna_mode = 1 << VNA_MODE_SHOW_GRID;
+  config._vna_mode = ( 1 << VNA_MODE_SHOW_GRID ) + ( 1 << VNA_MODE_SEARCH ); // Show grid values  + Search MIN 
 }
 
 //
