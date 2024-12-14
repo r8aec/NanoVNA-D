@@ -24,6 +24,7 @@
 #include "hal.h"
 #include "chprintf.h"
 #include "nanovna.h"
+#include <stdlib.h>
 
 static void cell_draw_marker_info(int x0, int y0);
 static void draw_battery_status(void);
@@ -662,26 +663,11 @@ static void mark_set_index(index_t *index, uint16_t i, uint16_t x, uint16_t y) {
 
 static void 
 draw_swr_indicator(int idx) {
-/*  switch (idx)
-  {
-  case 0:
-    lcd_set_foreground(LCD_NORMAL_BAT_COLOR);
-    break;
-  case 1:
-    lcd_set_foreground(LCD_LOW_BAT_COLOR);
-    break;
-  case 2:
-    lcd_set_foreground(LCD_TRACE_4_COLOR);
-    break;
-  default:
-    lcd_set_foreground(LCD_BG_COLOR);
-    break;
-  }*/
   lcd_set_foreground(LCD_MEASURE_COLOR);
-    lcd_line(0,30,9,30);
-    lcd_line(9,30,9,55);
-    lcd_line(9,55,0,55);
-    lcd_line(0,55,0,30);
+  lcd_line(0,30,9,30);
+  lcd_line(9,30,9,55);
+  lcd_line(9,55,0,55);
+  lcd_line(0,55,0,30);
   lcd_set_foreground(idx);
   for (int x=1; x<9; x++)
     lcd_line(x, 31, x, 54);
@@ -703,15 +689,29 @@ trace_into_index(int t) {
       refpos+= dscale;
     uint32_t dx = ((WIDTH)<<16) / (sweep_points-1), x = (CELLOFFSETX<<16) + dx * start + 0x8000;
     int32_t y;
-    float max_v = 0;
+    float max_v = 1;
+    float min_v = 10000;
+    float prev1=-1,prev2=-1; // For determine extremums 
+    uint16_t extremums_count = 0 , extremums_count_with_low_swr = 0;
     
     for (i = start; i <= stop; i++, x+= dx) {
       float v = 0;
       if (c) v = c(i, &array[2*i]);         // Get value
       if (v == INFINITY) {
-        y = 0;
+        y = 0;max_v = 10000;
       } else {
-        if (v > max_v) max_v = v;
+        if (v >= 1 && prev2 != -1 && prev1 != -1 && (type & (1<<TRC_SWR)) ) {
+          if (prev2 >= prev1 && (prev2 - prev1)> 0.1 && prev1 < v && (v-prev1) > 0.05 ) { 
+            extremums_count ++;
+            if (prev1 < 1.5 && prev1 >=1 )
+               extremums_count_with_low_swr++;
+          }
+        }
+        if (prev1 >=1) prev2 = prev1; else prev2 = 10000;
+        if (v >=1 ) prev1 = v; else prev1 = 10000;
+        if (v > max_v && v >=1 ) max_v = v; 
+        if (v<1) max_v = 10000;
+        if (v < min_v && v >=1 ) min_v = v;
         y = refpos - v * dscale;
              if (y <      0) y = 0;
         else if (y > HEIGHT) y = HEIGHT;
@@ -719,10 +719,14 @@ trace_into_index(int t) {
       mark_set_index(index, i, (uint16_t)(x>>16), y);
       if (type & (1<<TRC_SWR)) {
         int grid_color_idx_new = LCD_GRID_COLOR; 
-        if (max_v > SWR_MAX_VALUE || max_v < 1 )  
+        if ( !(max_v < 2 && extremums_count_with_low_swr == 0) && ((extremums_count == 0 && extremums_count_with_low_swr == 0 && min_v>2)  || (min_v >2) ||
+                                                                   ((extremums_count ==0 || extremums_count > 4) && extremums_count_with_low_swr == 0  && min_v>2)) ) 
+          grid_color_idx_new = LCD_LOW_BAT_COLOR;
+
+/*        if (max_v > SWR_MAX_VALUE || max_v < 1 )  
           grid_color_idx_new = LCD_LOW_BAT_COLOR;
         else if (max_v > SWR_MID_VALUE)    
-          grid_color_idx_new = LCD_TRACE_4_COLOR;
+          grid_color_idx_new = LCD_TRACE_4_COLOR;*/
         else
           grid_color_idx_new = LCD_NORMAL_BAT_COLOR;
         if (grid_color_idx_new != grid_color_idx) {
@@ -735,7 +739,16 @@ trace_into_index(int t) {
             request_to_redraw(REDRAW_AREA | REDRAW_PLOT | REDRAW_BATTERY | REDRAW_CAL_STATUS | REDRAW_FREQUENCY | REDRAW_CELLS);
         }
       }     
-    }
+    } 
+    lcd_set_background(LCD_BG_COLOR);
+    lcd_set_foreground(LCD_BW_TEXT_COLOR);
+    lcd_set_font(FONT_SMALL);
+    int max_v_int = (int) max_v, min_v_int = (int) min_v;
+    lcd_printf(CALIBRATION_INFO_POSX, CALIBRATION_INFO_POSY-10, "%d", extremums_count);
+    lcd_printf(CALIBRATION_INFO_POSX, CALIBRATION_INFO_POSY-20, "%d", extremums_count_with_low_swr);
+    lcd_printf(CALIBRATION_INFO_POSX, CALIBRATION_INFO_POSY-30, "%d    ", max_v_int);
+    lcd_printf(CALIBRATION_INFO_POSX, CALIBRATION_INFO_POSY-40, "%d    ", min_v_int);
+
     return;
   }
   // Smith/Polar grid
